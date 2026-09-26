@@ -813,7 +813,7 @@ class _GrowthChart extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 560;
-          final hasGrowthData = values.any((value) => value > 0);
+          final hasGrowthData = _hasMeaningfulGrowthData(values);
           return Container(
             height: compact ? 420 : 374,
             padding: EdgeInsets.fromLTRB(
@@ -958,6 +958,13 @@ class _ChartPainter extends CustomPainter {
     const bottom = 24.0;
     final plot =
         Rect.fromLTRB(left, top, size.width - right, size.height - bottom);
+    final hasGrowthData = _hasMeaningfulGrowthData(rawValues);
+    final values = hasGrowthData ? rawValues : illustrativeValues;
+    if (values.length < 2) return;
+    final maximum = values.reduce((left, right) => left > right ? left : right);
+    final chartMaximum = hasGrowthData
+        ? ((maximum / 5).ceil().clamp(1, 1000000) * 5).toDouble()
+        : 1000.0;
     final grid = Paint()
       ..color = const Color(0xFFE8EBF1)
       ..strokeWidth = 1;
@@ -967,16 +974,14 @@ class _ChartPainter extends CustomPainter {
         canvas.drawLine(
             Offset(x, y), Offset((x + 3).clamp(x, plot.right), y), grid);
       }
-      _paintLabel(canvas, i == 0 ? '1,000' : '${1000 - (i * 200)}',
-          Offset(0, y - 6), 40, TextAlign.right);
+      final labelValue = chartMaximum - (chartMaximum * i / 5);
+      _paintLabel(canvas, _formatAxisValue(labelValue), Offset(0, y - 6), 40,
+          TextAlign.right);
     }
-    final hasGrowthData = rawValues.any((value) => value > 0);
-    final values = hasGrowthData ? rawValues : illustrativeValues;
-    if (values.length < 2) return;
 
     final points = <Offset>[];
     for (var i = 0; i < values.length; i++) {
-      final normalized = (values[i] / 1000).clamp(0.0, 1.0);
+      final normalized = (values[i] / chartMaximum).clamp(0.0, 1.0);
       points.add(Offset(plot.left + plot.width * i / (values.length - 1),
           plot.bottom - plot.height * normalized));
       _paintLabel(canvas, '${i + 1}',
@@ -1031,6 +1036,27 @@ class _ChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ChartPainter oldDelegate) =>
       oldDelegate.rawValues != rawValues;
+}
+
+bool _hasMeaningfulGrowthData(List<double> values) {
+  if (values.length < 2) return false;
+  var minimum = values.first;
+  var maximum = values.first;
+  for (final value in values.skip(1)) {
+    if (value < minimum) minimum = value;
+    if (value > maximum) maximum = value;
+  }
+  return maximum > 0 && maximum - minimum >= 2;
+}
+
+String _formatAxisValue(double value) {
+  final rounded = value.round();
+  return rounded >= 1000
+      ? rounded.toString().replaceAllMapped(
+            RegExp(r'\B(?=(\d{3})+(?!\d))'),
+            (_) => ',',
+          )
+      : '$rounded';
 }
 
 class _ShipmentCard extends StatefulWidget {
