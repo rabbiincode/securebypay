@@ -36,8 +36,14 @@ export class AuthController {
   @Post("verify-email")
   @HttpCode(200)
   @Throttle({ default: { limit: 8, ttl: 60_000 } })
-  verifyEmail(@Body() input: VerifyCodeDto) {
-    return this.auth.verifyEmail(input.challengeId, input.code);
+  async verifyEmail(
+    @Body() input: VerifyCodeDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.withSessionCookie(
+      response,
+      await this.auth.verifyEmail(input.challengeId, input.code),
+    );
   }
 
   @Post("resend-email-verification")

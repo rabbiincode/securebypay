@@ -7,7 +7,6 @@ import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { DashboardModule } from "./dashboard/dashboard.module";
 import { EnvModule } from "./config/env.module";
-import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
@@ -17,7 +16,6 @@ import { AdminModule } from "./admin/admin.module";
     NotificationModule,
     AuthModule,
     DashboardModule,
-    AdminModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

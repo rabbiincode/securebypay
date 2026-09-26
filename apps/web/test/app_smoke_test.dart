@@ -125,6 +125,11 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
+    await tester.drag(
+        find.byType(CustomScrollView).last, const Offset(0, -1200));
+    await tester.pumpAndSettle();
+    expect(find.text('No shipments yet'), findsOneWidget);
+
     for (final size in const [
       Size(899, 800),
       Size(768, 700),

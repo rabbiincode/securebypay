@@ -4,7 +4,6 @@ import 'core/theme.dart';
 import 'features/auth/auth_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/dashboard/shipment_pages.dart';
-import 'features/dashboard/admin_wallet_page.dart';
 import 'core/api_client.dart';
 import 'features/auth/verification_page.dart';
 import 'features/auth/password_reset_page.dart';
@@ -47,8 +46,6 @@ class SecureByPayApp extends StatelessWidget {
           builder: (_, __) => const AuthPage(mode: AuthMode.signUp)),
       GoRoute(path: '/dashboard', builder: (_, __) => const DashboardPage()),
       GoRoute(path: '/shipments', builder: (_, __) => const ShipmentsPage()),
-      GoRoute(
-          path: '/admin/wallet', builder: (_, __) => const AdminWalletPage()),
       GoRoute(
           path: '/shipments/:id',
           builder: (_, state) =>

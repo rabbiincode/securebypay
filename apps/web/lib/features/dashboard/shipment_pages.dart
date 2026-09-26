@@ -14,6 +14,13 @@ class ShipmentsPage extends StatelessWidget {
         builder: (data) {
           final shipments =
               data['recentShipments'] as List<dynamic>? ?? const [];
+          if (shipments.isEmpty) {
+            return const _ShipmentState(
+              icon: Icons.local_shipping_outlined,
+              title: 'No shipments yet',
+              message: 'Shipments linked to your account will appear here.',
+            );
+          }
           return ListView.separated(
             padding: const EdgeInsets.all(28),
             itemCount: shipments.length,
@@ -120,7 +127,9 @@ class _DashboardDataPage extends StatefulWidget {
 }
 
 class _DashboardDataPageState extends State<_DashboardDataPage> {
-  late final Future<Map<String, dynamic>> data = apiClient.dashboard();
+  late Future<Map<String, dynamic>> data = apiClient.dashboard();
+
+  void _retry() => setState(() => data = apiClient.dashboard());
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -139,12 +148,57 @@ class _DashboardDataPageState extends State<_DashboardDataPage> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               if (snapshot.hasError) {
-                return const Center(child: Text('Unable to load shipments.'));
+                return _ShipmentState(
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Unable to load shipments',
+                  message: 'Check your connection and try again.',
+                  action: FilledButton(
+                    onPressed: _retry,
+                    child: const Text('Try again'),
+                  ),
+                );
               }
               return const Center(child: CircularProgressIndicator());
             }
             return widget.builder(snapshot.data!);
           },
+        ),
+      );
+}
+
+class _ShipmentState extends StatelessWidget {
+  const _ShipmentState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 48, color: const Color(0xFF9AA3B5)),
+            const SizedBox(height: 16),
+            Text(title,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF737373))),
+            if (action != null) ...[
+              const SizedBox(height: 20),
+              action!,
+            ],
+          ]),
         ),
       );
 }

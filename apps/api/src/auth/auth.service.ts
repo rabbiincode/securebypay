@@ -100,12 +100,12 @@ export class AuthService {
       code,
       ChallengePurpose.EMAIL_VERIFICATION,
     );
-    await this.prisma.user.update({
+    const verifiedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: { emailVerified: new Date() },
     });
     await this.audit(user.id, "email.verified");
-    return { message: "Email verified successfully. Please sign in." };
+    return this.createSession(verifiedUser);
   }
 
   async resendEmailVerification(email: string) {

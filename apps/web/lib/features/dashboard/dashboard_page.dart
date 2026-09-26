@@ -104,18 +104,46 @@ class _DashboardPageState extends State<DashboardPage> {
               period: _period,
               onPeriodChanged: (value) => setState(() => _period = value)),
           const SizedBox(height: 12),
-          for (final shipment
-              in (data['recentShipments'] as List<dynamic>? ?? const [])
-                  .take(3)) ...[
-            _ShipmentCard(
-                shipment: shipment as Map<String, dynamic>,
-                onViewMore: () => _showShipmentDetails(context, shipment)),
-            const SizedBox(height: 12),
-          ],
+          if ((data['recentShipments'] as List<dynamic>? ?? const []).isEmpty)
+            const _DashboardEmptyShipments()
+          else
+            for (final shipment
+                in (data['recentShipments'] as List<dynamic>? ?? const [])
+                    .take(3)) ...[
+              _ShipmentCard(
+                  shipment: shipment as Map<String, dynamic>,
+                  onViewMore: () => _showShipmentDetails(context, shipment)),
+              const SizedBox(height: 12),
+            ],
         ]),
       ),
     ]);
   }
+}
+
+class _DashboardEmptyShipments extends StatelessWidget {
+  const _DashboardEmptyShipments();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 44),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8)),
+        child: const Column(children: [
+          Icon(Icons.local_shipping_outlined,
+              size: 42, color: Color(0xFF9AA3B5)),
+          SizedBox(height: 14),
+          Text('No shipments yet',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          SizedBox(height: 6),
+          Text('Your recent shipments will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF737373))),
+        ]),
+      );
 }
 
 Future<void> _showShipmentDetails(
@@ -305,7 +333,6 @@ class _Sidebar extends StatelessWidget {
     ('Wallet', 'assets/credit-card.svg'),
     ('My Addresses', 'assets/locate-fixed.svg'),
     ('Invite & Earn', 'assets/badge-dollar-sign.svg'),
-    ('Admin Wallet', 'assets/credit-card.svg'),
     ('Help Center', 'assets/hand-helping.svg'),
   ];
 
@@ -336,9 +363,7 @@ class _SidebarBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleItems = _Sidebar.items
-        .where((item) => item.$1 != 'Admin Wallet' || user['role'] == 'ADMIN')
-        .toList();
+    const visibleItems = _Sidebar.items;
     return CustomScrollView(slivers: [
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(28, 22, 28, 0),
@@ -356,9 +381,7 @@ class _SidebarBody extends StatelessWidget {
                     ? () => context.go('/dashboard')
                     : item.$1 == 'Shipments'
                         ? () => context.go('/shipments')
-                        : item.$1 == 'Admin Wallet'
-                            ? () => context.go('/admin/wallet')
-                            : null,
+                        : null,
               ),
             );
           },
@@ -575,14 +598,18 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final Widget trailing;
   @override
-  Widget build(BuildContext context) =>
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(title,
-            style: const TextStyle(
-                color: Color(0xFF171717),
-                fontSize: 24,
-                height: 1,
-                fontWeight: FontWeight.w500)),
+  Widget build(BuildContext context) => Row(children: [
+        Expanded(
+          child: Text(title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: Color(0xFF171717),
+                  fontSize: 24,
+                  height: 1,
+                  fontWeight: FontWeight.w500)),
+        ),
+        const SizedBox(width: 12),
         trailing,
       ]);
 }

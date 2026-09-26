@@ -20,7 +20,7 @@ The composition policy applies to registration, sign in, and password reset. Per
 ## Related controls
 
 1. Email verification is required after registration.
-2. Verifying a new email address does not create a session. The user must complete the normal password and login code flow.
+2. Verifying a new email address creates the user's first authenticated session and continues to the dashboard.
 3. Every password authenticated login requires a single use email code.
 4. Verification codes expire after five minutes and allow only a limited number of attempts.
 5. Password reset revokes active sessions.

@@ -50,18 +50,10 @@ The dashboard reads the user's name, optional profile image URL, wallet balance,
 
 For profile images, Cloudinary or Supabase Storage is simpler than maintaining AWS S3 directly. Store only the returned HTTPS asset URL in `User.profileImageUrl`; keep the image binary in the selected managed storage service.
 
-### Admin wallet simulation
-
-The seed command promotes only the most recently registered local account to `ADMIN`. Normal registrations receive the `USER` role. Administrators see an **Admin Wallet** navigation item and may issue assessment credits by recipient email.
-
-`POST /api/admin/wallet/simulated-top-ups` requires authentication and a database backed administrator role. Each credit updates the recipient balance and writes an immutable `SIMULATED_TOP_UP` ledger record and audit event in one PostgreSQL transaction. A unique idempotency key makes retries safe. Each credit must be between ₦100 and ₦1,000,000.
-
-Simulation is enabled by default during local development and tests. In production, it is disabled unless `PAYMENT_SIMULATION_ENABLED=true` is explicitly configured. The Render blueprint prompts for this value; use `true` only for the controlled assessment demo.
-
 ## Authentication lifecycle
 
 1. Registration creates an unverified account and emails a code that expires after five minutes.
-2. Email verification consumes that single use code, activates the account, and returns the user to sign in without creating a session.
+2. Email verification consumes that single use code, activates the account, creates the first session, and continues to the dashboard.
 3. Sign in validates the password, emails a new code, and creates no session until the login code is verified.
 4. Access tokens are short lived. Refresh tokens are rotated, stored only as hashes in PostgreSQL, and delivered in `HttpOnly` cookies.
 5. Logout revokes the current session. The logout all endpoint revokes every active session for the account.

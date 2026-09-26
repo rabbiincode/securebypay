@@ -30,8 +30,7 @@ class ApiClient {
       _send('POST', '/auth/login',
           body: {'email': email, 'password': password});
   Future<Map<String, dynamic>> verifyEmail(String challengeId, String code) =>
-      _send('POST', '/auth/verify-email',
-          body: {'challengeId': challengeId, 'code': code});
+      _session('/auth/verify-email', challengeId, code);
   Future<Map<String, dynamic>> verifyLogin(String challengeId, String code) =>
       _session('/auth/verify-login', challengeId, code);
   Future<Map<String, dynamic>> forgotPassword(String email) =>
@@ -45,27 +44,6 @@ class ApiClient {
       });
   Future<Map<String, dynamic>> dashboard() =>
       _send('GET', '/dashboard', authenticated: true);
-  Future<Map<String, dynamic>> simulateWalletTopUp({
-    required String recipientEmail,
-    required double amount,
-    required String idempotencyKey,
-    String? description,
-  }) =>
-      _send('POST', '/admin/wallet/simulated-top-ups',
-          authenticated: true,
-          body: {
-            'recipientEmail': recipientEmail,
-            'amount': amount,
-            'idempotencyKey': idempotencyKey,
-            if (description != null && description.trim().isNotEmpty)
-              'description': description.trim(),
-          });
-  Future<Map<String, dynamic>> findAdminWalletUser(String email) => _send(
-        'GET',
-        '/admin/users/lookup?email=${Uri.encodeQueryComponent(email.trim())}',
-        authenticated: true,
-      );
-
   Future<void> restoreSession() async {
     try {
       _acceptSession(await _send('POST', '/auth/refresh'));

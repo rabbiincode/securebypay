@@ -1,4 +1,4 @@
-import { PrismaClient, ShipmentStatus, UserRole } from "@prisma/client";
+import { PrismaClient, ShipmentStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -8,13 +8,12 @@ async function main() {
     throw new Error("Register a user before running the dashboard seed.");
 
   const existing = await prisma.shipment.count({ where: { userId: user.id } });
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      role: UserRole.ADMIN,
-      ...(existing === 0 ? { walletBalance: 3000000.28 } : {}),
-    },
-  });
+  if (existing === 0) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { walletBalance: 3000000.28 },
+    });
+  }
   const statuses = [
     ShipmentStatus.IN_TRANSIT,
     ShipmentStatus.DELAYED,

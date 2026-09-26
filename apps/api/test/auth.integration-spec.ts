@@ -108,28 +108,13 @@ describe("Authentication integration", () => {
       })
       .expect(200);
 
-    expect(verified.body).toEqual({
-      message: "Email verified successfully. Please sign in.",
-    });
-    expect(verified.body).not.toHaveProperty("accessToken");
-    expect(verified.headers["set-cookie"]).toBeUndefined();
-
-    const login = await request(app.getHttpServer())
-      .post("/api/auth/login")
-      .send({ email: "ada@example.com", password: "StrongPassword123!" })
-      .expect(200);
-    const loginCode = await codeFor("SIGN_IN_CODE", login.body.challengeId);
-    const signedIn = await request(app.getHttpServer())
-      .post("/api/auth/verify-login")
-      .send({ challengeId: login.body.challengeId, code: loginCode })
-      .expect(200);
-
-    expect(signedIn.body.accessToken).toEqual(expect.any(String));
-    const firstCookie = signedIn.headers["set-cookie"][0] as string;
+    expect(verified.body.accessToken).toEqual(expect.any(String));
+    expect(verified.body.user).toMatchObject({ email: "ada@example.com" });
+    const firstCookie = verified.headers["set-cookie"][0] as string;
 
     await request(app.getHttpServer())
       .get("/api/dashboard")
-      .set("Authorization", `Bearer ${signedIn.body.accessToken}`)
+      .set("Authorization", `Bearer ${verified.body.accessToken}`)
       .expect(200)
       .expect(({ body }) =>
         expect(body.metrics).toEqual({
@@ -138,67 +123,6 @@ describe("Authentication integration", () => {
           totalImports: 0,
         }),
       );
-
-    const topUp = {
-      recipientEmail: "ada@example.com",
-      amount: 25000,
-      idempotencyKey: "integration-admin-top-up-0001",
-      description: "Integration test credit",
-    };
-    await request(app.getHttpServer())
-      .post("/api/admin/wallet/simulated-top-ups")
-      .set("Authorization", `Bearer ${signedIn.body.accessToken}`)
-      .send(topUp)
-      .expect(403);
-
-    await prisma.user.update({
-      where: { email: "ada@example.com" },
-      data: { role: "ADMIN" },
-    });
-    await request(app.getHttpServer())
-      .get("/api/admin/users/lookup")
-      .query({ email: "ada@example.com" })
-      .set("Authorization", `Bearer ${signedIn.body.accessToken}`)
-      .expect(200)
-      .expect(({ body }) =>
-        expect(body).toMatchObject({
-          email: "ada@example.com",
-          firstName: "Ada",
-          lastName: "Lovelace",
-        }),
-      );
-    const credited = await request(app.getHttpServer())
-      .post("/api/admin/wallet/simulated-top-ups")
-      .set("Authorization", `Bearer ${signedIn.body.accessToken}`)
-      .send(topUp)
-      .expect(201);
-    expect(credited.body).toMatchObject({
-      amount: "25000.00",
-      balanceAfter: "25000.00",
-      replayed: false,
-    });
-
-    const replayed = await request(app.getHttpServer())
-      .post("/api/admin/wallet/simulated-top-ups")
-      .set("Authorization", `Bearer ${signedIn.body.accessToken}`)
-      .send(topUp)
-      .expect(201);
-    expect(replayed.body).toMatchObject({
-      balanceAfter: "25000.00",
-      replayed: true,
-    });
-    await request(app.getHttpServer())
-      .post("/api/admin/wallet/simulated-top-ups")
-      .set("Authorization", `Bearer ${signedIn.body.accessToken}`)
-      .send({ ...topUp, amount: 26000 })
-      .expect(409);
-    expect(
-      (
-        await prisma.user.findUniqueOrThrow({
-          where: { email: "ada@example.com" },
-        })
-      ).walletBalance.toFixed(2),
-    ).toBe("25000.00");
 
     const refreshed = await request(app.getHttpServer())
       .post("/api/auth/refresh")

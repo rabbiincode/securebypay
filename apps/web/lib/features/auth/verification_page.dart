@@ -39,10 +39,24 @@ class _VerificationPageState extends State<VerificationPage> {
       if (widget.purpose == 'email') {
         await apiClient.verifyEmail(widget.challengeId, _code.text);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Email verified. Sign in to continue.'),
-          ));
-          context.go('/sign-in');
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              icon: const Icon(Icons.check_circle,
+                  color: Color(0xFF188D13), size: 42),
+              title: const Text('Registration complete'),
+              content: const Text(
+                  'Your email has been verified and your account is ready.'),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Continue to dashboard'),
+                ),
+              ],
+            ),
+          );
+          if (mounted) context.go('/dashboard');
         }
       } else {
         await apiClient.verifyLogin(widget.challengeId, _code.text);
@@ -70,6 +84,14 @@ class _VerificationPageState extends State<VerificationPage> {
             Text(
               'We sent a six-digit verification code to ${widget.destination}. The code expires in five minutes.',
               style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'If you cannot find the email in your inbox, please check your spam folder.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 36),
             AuthLabeledField(
