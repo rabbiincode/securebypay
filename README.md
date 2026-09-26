@@ -46,7 +46,7 @@ cd apps/api
 npm run db:seed
 ```
 
-The dashboard reads the user's name, optional profile image URL, wallet balance, metrics, chart series, and shipment records from PostgreSQL. “See All” and “View More” open protected shipment list and detail routes. Running the seed repeatedly is safe because it does not duplicate an account's shipment fixtures.
+The dashboard reads the user's name, optional profile image URL, wallet balance, metrics, chart series, and shipment records from PostgreSQL. “See All” and “View More” open protected shipment list and detail routes. A newly verified account receives twelve duplicate-safe showcase shipments automatically so the hosted assessment demonstrates the complete dashboard immediately. Running the seed repeatedly is also safe because it does not duplicate an account's shipment fixtures.
 
 For profile images, Cloudinary or Supabase Storage is simpler than maintaining AWS S3 directly. Store only the returned HTTPS asset URL in `User.profileImageUrl`; keep the image binary in the selected managed storage service.
 

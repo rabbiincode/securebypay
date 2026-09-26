@@ -118,9 +118,9 @@ describe("Authentication integration", () => {
       .expect(200)
       .expect(({ body }) =>
         expect(body.metrics).toEqual({
-          totalShipments: 0,
-          totalExports: 0,
-          totalImports: 0,
+          totalShipments: 12,
+          totalExports: 4,
+          totalImports: 8,
         }),
       );
 

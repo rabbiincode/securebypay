@@ -25,6 +25,8 @@ describe("AuthService", () => {
 
   function setup() {
     const tx = {
+      user: { update: resolved(user) },
+      shipment: { createMany: resolved({ count: 12 }) },
       verificationChallenge: {
         updateMany: resolved({ count: 0 }),
         create: resolved({ id: "challenge-1" }),
@@ -137,7 +139,7 @@ describe("AuthService", () => {
   });
 
   it("issues the first session after email verification", async () => {
-    const { service, prisma } = setup();
+    const { service, prisma, tx } = setup();
     const code = "123456";
     prisma.verificationChallenge.findUnique.mockResolvedValue({
       id: "challenge-1",
@@ -149,17 +151,24 @@ describe("AuthService", () => {
       user,
     });
     prisma.verificationChallenge.updateMany.mockResolvedValue({ count: 1 });
-    prisma.user.update.mockResolvedValue(user);
     prisma.session.create.mockResolvedValue({});
 
     const result = await service.verifyEmail("challenge-1", code);
 
     expect(result).toHaveProperty("accessToken", "token");
     expect(result).toHaveProperty("refreshToken", "token");
-    expect(prisma.user.update).toHaveBeenCalledWith(
+    expect(tx.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: user.id },
-        data: { emailVerified: expect.any(Date) },
+        data: expect.objectContaining({ emailVerified: expect.any(Date) }),
+      }),
+    );
+    expect(tx.shipment.createMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.objectContaining({ userId: user.id }),
+        ]),
+        skipDuplicates: true,
       }),
     );
   });

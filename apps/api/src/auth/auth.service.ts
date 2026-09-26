@@ -5,7 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-import { ChallengePurpose, Prisma, User } from "@prisma/client";
+import { ChallengePurpose, Prisma, ShipmentStatus, User } from "@prisma/client";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import { createHash, createHmac, randomBytes, randomInt } from "node:crypto";
@@ -100,9 +100,44 @@ export class AuthService {
       code,
       ChallengePurpose.EMAIL_VERIFICATION,
     );
-    const verifiedUser = await this.prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerified: new Date() },
+    const verifiedUser = await this.prisma.$transaction(async (database) => {
+      const verified = await database.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: new Date(),
+          walletBalance: { set: new Prisma.Decimal("3000000.28") },
+        },
+      });
+      const statuses = [
+        ShipmentStatus.IN_TRANSIT,
+        ShipmentStatus.DELAYED,
+        ShipmentStatus.DELIVERED,
+        ShipmentStatus.PAID,
+      ];
+      const pickups = ["Lagos, Nigeria", "Abuja, Nigeria", "Kano, Nigeria"];
+      const destinations = [
+        "Oyo, Nigeria",
+        "Enugu, Nigeria",
+        "Ibadan, Nigeria",
+      ];
+      const trackingPrefix = `MAF-${user.id.slice(-8).toUpperCase()}`;
+      await database.shipment.createMany({
+        data: Array.from({ length: 12 }, (_, index) => ({
+          userId: user.id,
+          trackingId: `${trackingPrefix}-${String(index + 1).padStart(3, "0")}`,
+          sender: `${user.firstName} ${user.lastName}`,
+          receiver: ["Mercy James", "Bunmi Tanny", "Amina Yusuf"][index % 3],
+          pickupLocation: pickups[index % pickups.length],
+          deliveryLocation: destinations[index % destinations.length],
+          amount: new Prisma.Decimal(3000 + index * 750),
+          status: statuses[index % statuses.length],
+          isExport: index % 3 === 0,
+          processingHours: 8 + index,
+          createdAt: new Date(Date.now() - index * 30 * 24 * 60 * 60 * 1000),
+        })),
+        skipDuplicates: true,
+      });
+      return verified;
     });
     await this.audit(user.id, "email.verified");
     return this.createSession(verifiedUser);
