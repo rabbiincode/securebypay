@@ -813,6 +813,7 @@ class _GrowthChart extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 560;
+          final hasGrowthData = values.any((value) => value > 0);
           return Container(
             height: compact ? 420 : 374,
             padding: EdgeInsets.fromLTRB(
@@ -823,14 +824,9 @@ class _GrowthChart extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8)),
             child: Column(children: [
               if (compact) ...[
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Company Growth',
-                      style: TextStyle(
-                          color: Color(0xFF243047),
-                          fontSize: 18,
-                          height: 1,
-                          fontWeight: FontWeight.w700)),
+                  child: _ChartTitle(showIllustrativeLabel: !hasGrowthData),
                 ),
                 const SizedBox(height: 14),
                 SizedBox(
@@ -844,12 +840,7 @@ class _GrowthChart extends StatelessWidget {
                 SizedBox(
                   height: 40,
                   child: Row(children: [
-                    const Text('Company Growth',
-                        style: TextStyle(
-                            color: Color(0xFF243047),
-                            fontSize: 18,
-                            height: 1,
-                            fontWeight: FontWeight.w700)),
+                    _ChartTitle(showIllustrativeLabel: !hasGrowthData),
                     const Spacer(),
                     _PeriodSelector(
                         selected: period, onChanged: onPeriodChanged),
@@ -862,6 +853,29 @@ class _GrowthChart extends StatelessWidget {
             ]),
           );
         },
+      );
+}
+
+class _ChartTitle extends StatelessWidget {
+  const _ChartTitle({required this.showIllustrativeLabel});
+  final bool showIllustrativeLabel;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Company Growth',
+              style: TextStyle(
+                  color: Color(0xFF243047),
+                  fontSize: 18,
+                  height: 1,
+                  fontWeight: FontWeight.w700)),
+          if (showIllustrativeLabel) ...[
+            const SizedBox(width: 8),
+            const Text('(illustrative)',
+                style: TextStyle(fontSize: 11, color: Color(0xFF7D8799))),
+          ],
+        ],
       );
 }
 
@@ -921,6 +935,20 @@ class _PeriodSelector extends StatelessWidget {
 class _ChartPainter extends CustomPainter {
   const _ChartPainter(this.rawValues);
   final List<double> rawValues;
+  static const illustrativeValues = <double>[
+    280,
+    320,
+    300,
+    360,
+    330,
+    440,
+    320,
+    490,
+    380,
+    630,
+    120,
+    980,
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -942,7 +970,8 @@ class _ChartPainter extends CustomPainter {
       _paintLabel(canvas, i == 0 ? '1,000' : '${1000 - (i * 200)}',
           Offset(0, y - 6), 40, TextAlign.right);
     }
-    final values = rawValues.isEmpty ? List<double>.filled(12, 0) : rawValues;
+    final hasGrowthData = rawValues.any((value) => value > 0);
+    final values = hasGrowthData ? rawValues : illustrativeValues;
     if (values.length < 2) return;
 
     final points = <Offset>[];

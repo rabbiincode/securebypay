@@ -43,6 +43,7 @@ class _VerificationPageState extends State<VerificationPage> {
             context: context,
             barrierDismissible: false,
             builder: (dialogContext) => AlertDialog(
+              actionsAlignment: MainAxisAlignment.center,
               icon: const Icon(Icons.check_circle,
                   color: Color(0xFF188D13), size: 42),
               title: const Text('Registration complete'),
