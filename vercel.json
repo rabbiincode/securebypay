@@ -3,4 +3,3 @@
   "outputDirectory": "apps/web/build/web",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
-

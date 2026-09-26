@@ -4,7 +4,7 @@ import { AccessTokenGuard } from '../auth/access-token.guard';
 import { AuthUser, CurrentUser } from '../auth/auth-user.decorator';
 import { DashboardService } from './dashboard.service';
 
-@ApiTags('dashboard')
+@ApiTags('Dashboard')
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
 @Controller('dashboard')

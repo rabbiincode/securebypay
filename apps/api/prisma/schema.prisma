@@ -8,30 +8,60 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  firstName     String
-  lastName      String
-  phoneNumber   String?
-  passwordHash  String?
-  emailVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  walletBalance Decimal   @default(0) @db.Decimal(18, 2)
-  sessions      Session[]
-  challenges    VerificationChallenge[]
-  auditEvents   AuditEvent[]
-  shipments     Shipment[]
+  id                       String                  @id @default(cuid())
+  email                    String                  @unique
+  firstName                String
+  lastName                 String
+  phoneNumber              String?
+  profileImageUrl          String?
+  passwordHash             String?
+  emailVerified            DateTime?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  walletBalance            Decimal                 @default(0) @db.Decimal(18, 2)
+  role                     UserRole                @default(USER)
+  sessions                 Session[]
+  challenges               VerificationChallenge[]
+  auditEvents              AuditEvent[]
+  shipments                Shipment[]
+  walletTransactions       WalletTransaction[]     @relation("WalletTransactionRecipient")
+  administeredTransactions WalletTransaction[]     @relation("WalletTransactionActor")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum WalletTransactionType {
+  SIMULATED_TOP_UP
+}
+
+model WalletTransaction {
+  id             String                @id @default(cuid())
+  recipientId    String
+  actorUserId    String
+  type           WalletTransactionType
+  amount         Decimal               @db.Decimal(18, 2)
+  balanceAfter   Decimal               @db.Decimal(18, 2)
+  idempotencyKey String                @unique
+  description    String?
+  createdAt      DateTime              @default(now())
+  recipient      User                  @relation("WalletTransactionRecipient", fields: [recipientId], references: [id], onDelete: Restrict)
+  actor          User                  @relation("WalletTransactionActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([recipientId, createdAt])
+  @@index([actorUserId, createdAt])
 }
 
 model Session {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
-  refreshTokenHash String   @unique
+  refreshTokenHash String    @unique
   expiresAt        DateTime
   revokedAt        DateTime?
-  createdAt        DateTime @default(now())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -43,15 +73,15 @@ enum ChallengePurpose {
 }
 
 model VerificationChallenge {
-  id        String           @id @default(cuid())
-  userId    String
-  purpose   ChallengePurpose
-  codeHash  String
-  expiresAt DateTime
+  id         String           @id @default(cuid())
+  userId     String
+  purpose    ChallengePurpose
+  codeHash   String
+  expiresAt  DateTime
   consumedAt DateTime?
-  attempts  Int              @default(0)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts   Int              @default(0)
+  createdAt  DateTime         @default(now())
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, purpose, createdAt])
 }
@@ -101,20 +131,20 @@ enum ShipmentStatus {
 }
 
 model Shipment {
-  id              String         @id @default(cuid())
-  userId          String
-  trackingId      String         @unique
-  sender          String
-  receiver        String
-  pickupLocation  String
+  id               String         @id @default(cuid())
+  userId           String
+  trackingId       String         @unique
+  sender           String
+  receiver         String
+  pickupLocation   String
   deliveryLocation String
-  amount          Decimal        @db.Decimal(18, 2)
-  status          ShipmentStatus
-  isExport        Boolean        @default(false)
-  processingHours Int
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount           Decimal        @db.Decimal(18, 2)
+  status           ShipmentStatus
+  isExport         Boolean        @default(false)
+  processingHours  Int
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
