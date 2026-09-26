@@ -813,7 +813,6 @@ class _GrowthChart extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 560;
-          final hasGrowthData = _hasMeaningfulGrowthData(values);
           return Container(
             height: compact ? 420 : 374,
             padding: EdgeInsets.fromLTRB(
@@ -824,9 +823,9 @@ class _GrowthChart extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8)),
             child: Column(children: [
               if (compact) ...[
-                Align(
+                const Align(
                   alignment: Alignment.centerLeft,
-                  child: _ChartTitle(showIllustrativeLabel: !hasGrowthData),
+                  child: _ChartTitle(),
                 ),
                 const SizedBox(height: 14),
                 SizedBox(
@@ -840,7 +839,7 @@ class _GrowthChart extends StatelessWidget {
                 SizedBox(
                   height: 40,
                   child: Row(children: [
-                    _ChartTitle(showIllustrativeLabel: !hasGrowthData),
+                    const _ChartTitle(),
                     const Spacer(),
                     _PeriodSelector(
                         selected: period, onChanged: onPeriodChanged),
@@ -857,26 +856,15 @@ class _GrowthChart extends StatelessWidget {
 }
 
 class _ChartTitle extends StatelessWidget {
-  const _ChartTitle({required this.showIllustrativeLabel});
-  final bool showIllustrativeLabel;
+  const _ChartTitle();
 
   @override
-  Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Company Growth',
-              style: TextStyle(
-                  color: Color(0xFF243047),
-                  fontSize: 18,
-                  height: 1,
-                  fontWeight: FontWeight.w700)),
-          if (showIllustrativeLabel) ...[
-            const SizedBox(width: 8),
-            const Text('(illustrative)',
-                style: TextStyle(fontSize: 11, color: Color(0xFF7D8799))),
-          ],
-        ],
-      );
+  Widget build(BuildContext context) => const Text('Company Growth',
+      style: TextStyle(
+          color: Color(0xFF243047),
+          fontSize: 18,
+          height: 1,
+          fontWeight: FontWeight.w700));
 }
 
 class _PeriodSelector extends StatelessWidget {
