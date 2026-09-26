@@ -8,9 +8,10 @@ import 'core/api_client.dart';
 import 'features/auth/verification_page.dart';
 import 'features/auth/password_reset_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await apiClient.restoreSession();
   runApp(const SecureByPayApp());
-  apiClient.restoreSession();
 }
 
 class SecureByPayApp extends StatelessWidget {
